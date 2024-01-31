@@ -18,3 +18,7 @@ RegisterServerEvent('kg-tazer:Log', function()
     
     PerformHttpRequest(Config.TazerWebhook, function(err, text, headers) end, 'POST', json.encode({username = name, embeds = embed}), { ['Content-Type'] = 'application/json' })
 end)
+
+RegisterServerEvent('kg-tazer:server:bounce', function(playerId)
+    TriggerClientEvent('kg-tazer:client:getTazed', playerId)
+end)

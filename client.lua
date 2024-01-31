@@ -18,7 +18,12 @@ end
 
 local function ReTaze()
     if tazeEnt ~= nil then
-        SetPedToRagdoll(tazeEnt, 3000, 6000, 0, false, false, false)
+        local closestPlayer, distance = QBCore.Functions.GetClosestPlayer()
+        local ped = PlayerPedId()
+        if distance ~= -1 and distance > 1 then
+            TriggerServerEvent("kg-tazer:server:bounce", GetPlayerServerId(closestPlayer))
+        end
+        --SetPedToRagdoll(ped, 3000, 5000, 0, 0, 0, 0)
     elseif tazeAmount >= 3 then
         QBCore.Functions.Notify('Tazer Out Of Charges', 'error')
     end
@@ -30,11 +35,11 @@ Citizen.CreateThread(function()
 
         if tazeEnt ~= nil then
             sleep = 100
-            if PullBarbCheck(GetEntityCoords(tazeEnt), GetEntityCoords(PlayerPedId())) then
-                QBCore.Functions.Notify('Barbs Ripped Out Of Suspect', 'error')
+            local hasWeapon, weapon = GetCurrentPedWeapon(PlayerPedId())
+            if IsEntityDead(NetworkGetEntityFromNetworkId(tazeEnt)) then
                 tazeEnt = nil
                 tazeAmount = 0
-            elseif IsEntityDead(tazeEnt) then
+            elseif weapon ~= 911657153 then
                 tazeEnt = nil
                 tazeAmount = 0
             end
@@ -56,7 +61,7 @@ RegisterCommand("shoot_taze", function(source)
         local found, entity = GetEntityPlayerIsFreeAimingAt(PlayerId())
         if found ~= false and entity ~= 0 then
             if IsEntityAPed(entity) ~= false then
-                tazeEnt = entity
+                tazeEnt = NetworkGetNetworkIdFromEntity(entity)
                 if Config.UseWebhook == true then
                     TriggerServerEvent('kg-tazer:Log')
                 end
@@ -66,3 +71,10 @@ RegisterCommand("shoot_taze", function(source)
 end)
 
 RegisterKeyMapping("shoot_taze", "Taze Send", "MOUSE_BUTTON", "MOUSE_LEFT")
+
+RegisterNetEvent('kg-tazer:client:getTazed', function()
+    SetPedToRagdoll(PlayerPedId(), 5000, 7500, 0, false, false, false)
+    TimerEnabled = true
+    Wait(1500)
+    TimerEnabled = false
+end)
